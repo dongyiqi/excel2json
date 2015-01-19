@@ -45,7 +45,7 @@ namespace excel2json
                             value = (int)num;
                     }
                     
-                    if (column.DataType == typeof(Object))
+                    if (column.DataType == typeof(string))
                     {
                         value = value + "";
                     }
