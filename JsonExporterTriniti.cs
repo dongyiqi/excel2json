@@ -58,6 +58,17 @@ namespace excel2json
         /// <param name="jsonPath">输出文件路径</param>
         public void SaveToFile(string filePath, Encoding encoding)
         {
+            string str = BuildSubJsonString();
+            //-- 保存文件
+            using (FileStream file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            {
+                using (TextWriter writer = new StreamWriter(file, encoding))
+                    writer.Write(str);
+            }
+        }
+
+        public string BuildSubJsonString()
+        {
             if (m_Head == null)
                 throw new Exception("JsonExporter内部数据为空。");
 
@@ -69,12 +80,8 @@ namespace excel2json
             jsonHead = jsonHead.Replace('}', ' ');
             string str = jsonHead + json;
             str += "}";
-            //-- 保存文件
-            using (FileStream file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            {
-                using (TextWriter writer = new StreamWriter(file, encoding))
-                    writer.Write(str);
-            }
+            
+            return str;
         }
     }
 }

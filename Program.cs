@@ -41,7 +41,7 @@ namespace excel2json
             System.TimeSpan dur = endTime - startTime;
             Console.WriteLine(
                 string.Format("[{0}]：\t转换完成[{1}毫秒].",
-                Path.GetFileName(options.ExcelPath),
+                Path.GetFileName(options.FilesPath),
                 dur.Milliseconds)
                 );
         }
@@ -52,11 +52,54 @@ namespace excel2json
         /// <param name="options">命令行参数</param>
         private static void Run(Options options)
         {
-            string excelPath = options.ExcelPath;
-            int header = options.HeaderRows;
+            //string excelPath = options.ExcelPath;
+            //int header = options.HeaderRows;
+            //-- 确定编码
+            Encoding cd = new UTF8Encoding(false);
+            if (options.Encoding != "utf8-nobom")
+            {
+                foreach (EncodingInfo ei in Encoding.GetEncodings())
+                {
+                    Encoding e = ei.GetEncoding();
+                    if (e.EncodingName == options.Encoding)
+                    {
+                        cd = e;
+                        break;
+                    }
+                }
+            }
 
+            string strFilesPath = options.FilesPath;
+            string strCsPath = options.CSPath;
+            DirectoryInfo folder = new DirectoryInfo(strFilesPath);
+            string strJson = "";
+            FileInfo[] files = folder.GetFiles("*.xlsx");
+            int nFileIndex = 0;
+            foreach (FileInfo file in files)
+            {
+                strJson += DoConvertFile(file.DirectoryName + "\\", file.Name, strCsPath, cd);
+                if(++nFileIndex != files.Length)
+                {
+                    strJson += ",";
+                }
+            }
+
+            
+            string strJsonToWrite = "{" + strJson + "}";
+            System.Diagnostics.Debug.Write(strJsonToWrite);
             // 加载Excel文件
-            using (FileStream excelFile = File.Open(excelPath, FileMode.Open, FileAccess.Read))
+            //-- 保存文件
+            string strSaveJson = strFilesPath + "\\data.json";
+            using (FileStream file = new FileStream(strSaveJson, FileMode.Create, FileAccess.Write))
+            {
+                using (TextWriter writer = new StreamWriter(file, cd))
+                    writer.Write(strJsonToWrite);
+            }
+        }
+
+        private static string DoConvertFile(string strPath, string strFileName, string strCsPath, Encoding cd)
+        {
+            using (FileStream excelFile = File.Open(strPath+strFileName, FileMode.Open, FileAccess.Read))
             {
                 // Reading from a OpenXml Excel file (2007 format; *.xlsx)
                 IExcelDataReader excelReader = ExcelReaderFactory.CreateOpenXmlReader(excelFile);
@@ -68,56 +111,48 @@ namespace excel2json
                 // 数据检测
                 if (book.Tables.Count < 1)
                 {
-                    throw new Exception("Excel文件中没有找到Sheet: " + excelPath);
+                    throw new Exception("Excel文件中没有找到Sheet: " + strFileName);
                 }
 
                 // 取得数据
                 DataTable sheet = book.Tables[0];
                 if (sheet.Rows.Count <= 0)
                 {
-                    throw new Exception("Excel Sheet中没有数据: " + excelPath);
+                    throw new Exception("Excel Sheet中没有数据: " + strFileName);
                 }
 
-                //-- 确定编码
-                Encoding cd = new UTF8Encoding(false);
-                if (options.Encoding != "utf8-nobom")
-                {
-                    foreach (EncodingInfo ei in Encoding.GetEncodings())
-                    {
-                        Encoding e = ei.GetEncoding();
-                        if (e.EncodingName == options.Encoding)
-                        {
-                            cd = e;
-                            break;
-                        }
-                    }
-                }
-
+               
+                string strJsonRet;
+                //TODO:合并文件
                 //-- 导出JSON文件
-                if (options.JsonPath != null && options.JsonPath.Length > 0)
+                if (true/*options.JsonPath != null && options.JsonPath.Length > 0*/)
                 {
                     //JsonExporter exporter = new JsonExporter(sheet, header);
-                    JsonExporterTriniti exporter = new JsonExporterTriniti(sheet, header);
-                    exporter.SaveToFile(options.JsonPath, cd);
+                    JsonExporterTriniti exporter = new JsonExporterTriniti(sheet, 3);
+//                     exporter.SaveToFile(strPath+Path.GetFileNameWithoutExtension(strFileName) + ".json"
+//                         , cd);
+                    string strJson = exporter.BuildSubJsonString();
+                    strJsonRet = string.Format("\"{0}\":{1}", Path.GetFileNameWithoutExtension(strFileName), strJson);                    
                 }
 
                 //-- 导出SQL文件
-                if (options.SQLPath != null && options.SQLPath.Length > 0)
+                if (false/*options.SQLPath != null && options.SQLPath.Length > 0*/)
                 {
-                    SQLExporter exporter = new SQLExporter(sheet, header);
-                    exporter.SaveToFile(options.SQLPath, cd);
+//                     SQLExporter exporter = new SQLExporter(sheet, header);
+//                     exporter.SaveToFile(options.SQLPath, cd);
                 }
 
                 //-- 生成C#定义文件
-                if (options.CSharpPath != null && options.CSharpPath.Length > 0)
+                if (true/*options.CSharpPath != null && options.CSharpPath.Length > 0*/)
                 {
-                    string excelName = Path.GetFileName(excelPath);
-
+                    string excelName = Path.GetFileName(strFileName);
                     CSDefineGenerator exporter = new CSDefineGenerator(sheet);
                     exporter.ClassComment = string.Format("// Generate From {0}", excelName);
-                    exporter.SaveToFile(options.CSharpPath, cd);
+                    exporter.SaveToFile(strCsPath + Path.GetFileNameWithoutExtension(strFileName) + ".cs", cd);
                 }
+                return strJsonRet;
             }
         }
+        
     }
 }

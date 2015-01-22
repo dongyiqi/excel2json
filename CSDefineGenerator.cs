@@ -68,7 +68,7 @@ namespace excel2json
 
             foreach (FieldDef field in m_fieldList)
             {
-                sb.AppendFormat("\treadonly public {0} {1}; // {2}", field.type, field.name, field.comment);
+                sb.AppendFormat("\t public {0} {1}; // {2}", field.type, field.name, field.comment);
                 sb.AppendLine();
             }
 
