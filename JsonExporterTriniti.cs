@@ -19,55 +19,56 @@ namespace excel2json
         /// </summary>
         /// <param name="sheet">ExcelReader创建的一个表单</param>
         /// <param name="headerRows">表单中的那几行是表头</param>
-        public JsonExporterTriniti(DataTable sheet, int headerRows)
+        public JsonExporterTriniti(DataSet book, int headerRows, string strFileName)
         {
-            if (sheet.Columns.Count <= 0)
-                return;
-            if (sheet.Rows.Count <= 0)
-                return;
-            //导出列
-            m_Head = new Dictionary<string, List<string>>();
-            List<string> heads = new List<string>();
-            foreach (DataColumn column in sheet.Columns)
+         // 取得数据
+            int nCount = book.Tables.Count;
+            for (int nSheet = 0; nSheet < book.Tables.Count; nSheet++)
             {
-                heads.Add(column.ColumnName);
-            }
-            m_Head.Add("header", heads);
-            //导出行
-            m_data = new Dictionary<string, List<List<string>>>();
-            //--以第一列为ID，转换成ID->Object的字典
-            int firstDataRow = headerRows - 1;
-            List<List<string>> data = new List<List<string>>();
-            for (int i = firstDataRow; i < sheet.Rows.Count; i++)
-            {
-                List<string> rowData = new List<string>();
-                DataRow row = sheet.Rows[i];
+                DataTable sheet = book.Tables[nSheet];
+                if (sheet.Rows.Count <= 0)
+                {
+                    throw new Exception("Excel Sheet中没有数据: " + book.DataSetName);
+                }
+
+                if (sheet.Columns.Count <= 0)
+                    return;
+                if (sheet.Rows.Count <= 0)
+                    return;
+
+                //导出列
+                m_Head = new Dictionary<string, List<string>>();
+                List<string> heads = new List<string>();
                 foreach (DataColumn column in sheet.Columns)
                 {
-                    object value = row[column];
-                    rowData.Add(value.ToString());
+                    heads.Add(column.ColumnName);
                 }
-                data.Add(rowData);
-            }
-            m_data.Add("data", data);
+                m_Head.Add("header", heads);
+                //导出行
+                m_data = new Dictionary<string, List<List<string>>>();
+                //--以第一列为ID，转换成ID->Object的字典
+                int firstDataRow = headerRows - 1;
+                List<List<string>> data = new List<List<string>>();
+                for (int i = firstDataRow; i < sheet.Rows.Count; i++)
+                {
+                    List<string> rowData = new List<string>();
+                    DataRow row = sheet.Rows[i];
+                    foreach (DataColumn column in sheet.Columns)
+                    {
+                        object value = row[column];
+                        rowData.Add(value.ToString());
+                    }
+                    data.Add(rowData);
+                }
+                m_data.Add("data", data);
+                BuildSubJsonString(book.Tables.Count ==1 ?
+                    Path.GetFileNameWithoutExtension(strFileName) : sheet.TableName
+                    ,nSheet != book.Tables.Count-1);
+            }       
         }
 
-        /// <summary>
-        /// 将内部数据转换成Json文本，并保存至文件
-        /// </summary>
-        /// <param name="jsonPath">输出文件路径</param>
-        public void SaveToFile(string filePath, Encoding encoding)
-        {
-            string str = BuildSubJsonString();
-            //-- 保存文件
-            using (FileStream file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            {
-                using (TextWriter writer = new StreamWriter(file, encoding))
-                    writer.Write(str);
-            }
-        }
 
-        public string BuildSubJsonString()
+        public string BuildSubJsonString(string strSheetName, bool bAddComa)
         {
             if (m_Head == null)
                 throw new Exception("JsonExporter内部数据为空。");
@@ -80,8 +81,11 @@ namespace excel2json
             jsonHead = jsonHead.Replace('}', ' ');
             string str = jsonHead + json;
             str += "}";
-            
+            str = string.Format("\"{0}\":{1}", Path.GetFileNameWithoutExtension(strSheetName), str);
+            if (bAddComa) str += ",";
+            _strJson += str;
             return str;
         }
+        public string _strJson;
     }
 }

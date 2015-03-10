@@ -114,25 +114,25 @@ namespace excel2json
                     throw new Exception("Excel文件中没有找到Sheet: " + strFileName);
                 }
 
-                // 取得数据
-                DataTable sheet = book.Tables[0];
-                if (sheet.Rows.Count <= 0)
-                {
-                    throw new Exception("Excel Sheet中没有数据: " + strFileName);
-                }
+//                 // 取得数据
+//                 DataTable sheet = book.Tables[0];
+//                 if (sheet.Rows.Count <= 0)
+//                 {
+//                     throw new Exception("Excel Sheet中没有数据: " + strFileName);
+//                 }
 
-               
-                string strJsonRet;
+
+                string strJsonRet = "";
                 //TODO:合并文件
                 //-- 导出JSON文件
                 if (true/*options.JsonPath != null && options.JsonPath.Length > 0*/)
                 {
                     //JsonExporter exporter = new JsonExporter(sheet, header);
-                    JsonExporterTriniti exporter = new JsonExporterTriniti(sheet, 3);
+                    JsonExporterTriniti exporter = new JsonExporterTriniti(book, 3, strFileName);
 //                     exporter.SaveToFile(strPath+Path.GetFileNameWithoutExtension(strFileName) + ".json"
 //                         , cd);
-                    string strJson = exporter.BuildSubJsonString();
-                    strJsonRet = string.Format("\"{0}\":{1}", Path.GetFileNameWithoutExtension(strFileName), strJson);                    
+                    strJsonRet = exporter._strJson;
+//                    strJsonRet = string.Format("\"{0}\":{1}", Path.GetFileNameWithoutExtension(strFileName), strJson);                    
                 }
 
                 //-- 导出SQL文件
@@ -143,13 +143,13 @@ namespace excel2json
                 }
 
                 //-- 生成C#定义文件
-                if (false/*options.CSharpPath != null && options.CSharpPath.Length > 0*/)
-                {
-                    string excelName = Path.GetFileName(strFileName);
-                    CSDefineGenerator exporter = new CSDefineGenerator(sheet);
-                    exporter.ClassComment = string.Format("// Generate From {0}", excelName);
-                    exporter.SaveToFile(strCsPath + Path.GetFileNameWithoutExtension(strFileName) + ".cs", cd);
-                }
+//                 if (false/*options.CSharpPath != null && options.CSharpPath.Length > 0*/)
+//                 {
+//                     string excelName = Path.GetFileName(strFileName);
+//                     CSDefineGenerator exporter = new CSDefineGenerator(sheet);
+//                     exporter.ClassComment = string.Format("// Generate From {0}", excelName);
+//                     exporter.SaveToFile(strCsPath + Path.GetFileNameWithoutExtension(strFileName) + ".cs", cd);
+//                 }
                 return strJsonRet;
             }
         }
