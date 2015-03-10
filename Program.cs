@@ -143,7 +143,7 @@ namespace excel2json
                 }
 
                 //-- 生成C#定义文件
-                if (true/*options.CSharpPath != null && options.CSharpPath.Length > 0*/)
+                if (false/*options.CSharpPath != null && options.CSharpPath.Length > 0*/)
                 {
                     string excelName = Path.GetFileName(strFileName);
                     CSDefineGenerator exporter = new CSDefineGenerator(sheet);

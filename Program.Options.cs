@@ -59,7 +59,7 @@ namespace excel2json
                 get;
                 set;
             }
-            [Option('c',"cspath",Required = true, HelpText = "导出cs文件路径.")]
+            [Option('c',"cspath",Required = false, HelpText = "导出cs文件路径.")]
             public string CSPath
             {
                 get;
