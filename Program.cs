@@ -75,6 +75,7 @@ namespace excel2json
             string strJson = "";
             FileInfo[] files = folder.GetFiles("*.xlsx");
             int nFileIndex = 0;
+#if COMBINE
             foreach (FileInfo file in files)
             {
                 strJson += DoConvertFile(file.DirectoryName + "\\", file.Name, strCsPath, cd);
@@ -83,8 +84,6 @@ namespace excel2json
                     strJson += ",";
                 }
             }
-
-            
             string strJsonToWrite = "{" + strJson + "}";
             System.Diagnostics.Debug.Write(strJsonToWrite);
             // 加载Excel文件
@@ -95,8 +94,37 @@ namespace excel2json
                 using (TextWriter writer = new StreamWriter(file, cd))
                     writer.Write(strJsonToWrite);
             }
-        }
+#else
+            foreach (FileInfo file in files)
+            {
+                strJson = DoConvertFile(file.DirectoryName + "\\", file.Name, strCsPath, cd);
+                strJson = "{" + strJson + "}";
+                System.Diagnostics.Debug.Write(strJson);
+                string strFileNameWithoutSuffix = file.Name.Substring(0, file.Name.IndexOf('.'));
 
+                byte[] bytesJson = XXTEAUtils.Encrypt(Encoding.UTF8.GetBytes(strJson), Encoding.UTF8.GetBytes(s_strKey));
+
+//                 strFileNameWithoutSuffix = Convert.ToBase64String(
+//                     XXTEAUtils.Encrypt(Encoding.UTF8.GetBytes(strFileNameWithoutSuffix), Encoding.UTF8.GetBytes(s_strKey))
+//                     );
+//                 strFileNameWithoutSuffix = strFileNameWithoutSuffix.Replace("/", "");
+
+                string strSaveJson = strCsPath  + strFileNameWithoutSuffix + ".json";
+                using (FileStream file2Write = new FileStream(strSaveJson, FileMode.Create, FileAccess.Write))
+                {
+                    using (TextWriter writer = new StreamWriter(file2Write, cd))
+                        writer.Write(strJson);
+//                     using (BinaryWriter writer = new BinaryWriter(file2Write, cd))
+//                         writer.Write(bytesJson);
+                }
+            }
+            
+            // 加载Excel文件
+            //-- 保存文件
+           
+#endif
+        }
+        static readonly string s_strKey = "Triniti$MiniWarriors@II";
         private static string DoConvertFile(string strPath, string strFileName, string strCsPath, Encoding cd)
         {
             using (FileStream excelFile = File.Open(strPath+strFileName, FileMode.Open, FileAccess.Read))

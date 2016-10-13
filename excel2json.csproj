@@ -61,6 +61,7 @@
     <Compile Include="Program.Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQLExporter.cs" />
+    <Compile Include="XXTEAUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
