@@ -41,6 +41,7 @@ namespace excel2json
                 List<string> heads = new List<string>();
                 foreach (DataColumn column in sheet.Columns)
                 {
+                    if (column.ColumnName.StartsWith("#")) continue;
                     heads.Add(column.ColumnName);
                 }
                 m_Head.Add("header", heads);
@@ -55,6 +56,7 @@ namespace excel2json
                     DataRow row = sheet.Rows[i];
                     foreach (DataColumn column in sheet.Columns)
                     {
+                        if (column.ColumnName.StartsWith("#")) continue;
                         object value = row[column];
                         rowData.Add(value.ToString());
                     }
